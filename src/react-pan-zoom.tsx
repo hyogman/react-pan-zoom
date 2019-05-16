@@ -2,7 +2,7 @@
   Heavily inspired/lifted from this idea: https://stackoverflow.com/a/39311435/661768
   without jqueryUI or jquery dependency.
 */
-import * as React from "react";
+import * as React from 'react';
 
 export interface IDragData {
   x: number;
@@ -21,17 +21,22 @@ export interface IReactPanZoomProps {
   width?: string;
   className?: string;
   enablePan?: boolean;
+  reCenter?: boolean;
   zoom?: number;
   pandx?: number;
   pandy?: number;
   onPan?: (x: number, y: number) => void;
 }
-export default class ReactPanZoom extends React.PureComponent<IReactPanZoomProps, IReactPanZoomStateType> {
+export default class ReactPanZoom extends React.PureComponent<
+  IReactPanZoomProps,
+  IReactPanZoomStateType
+> {
   // In strict null checking setting default props doesn't seem to work. Hence the non-null assertion.
   // :crossedfingers: it shouldn't be deprecated. Or the very least support defaultProps semantics as proposed
   // in this PR: https://github.com/Microsoft/TypeScript/issues/23812
   public static defaultProps: Partial<IReactPanZoomProps> = {
     enablePan: true,
+    reCenter: false,
     onPan: () => undefined,
     pandx: 0,
     pandy: 0,
@@ -49,7 +54,12 @@ export default class ReactPanZoom extends React.PureComponent<IReactPanZoomProps
       dragData: defaultDragData,
       dragging: false,
       matrixData: [
-        zoom!, 0, 0, zoom!, pandx!, pandy!, // [zoom, skew, skew, zoom, dx, dy]
+        zoom!,
+        0,
+        0,
+        zoom!,
+        pandx!,
+        pandy!, // [zoom, skew, skew, zoom, dx, dy]
       ],
     };
   };
@@ -77,7 +87,7 @@ export default class ReactPanZoom extends React.PureComponent<IReactPanZoomProps
       dragging: true,
     });
     if (this.panWrapper) {
-      this.panWrapper.style.cursor = "move";
+      this.panWrapper.style.cursor = 'move';
     }
     e.stopPropagation();
     e.nativeEvent.stopImmediatePropagation();
@@ -85,12 +95,18 @@ export default class ReactPanZoom extends React.PureComponent<IReactPanZoomProps
   };
 
   public componentWillReceiveProps(nextProps: IReactPanZoomProps) {
-    const { zoom } = nextProps;
+    const { zoom, reCenter } = nextProps;
     const { matrixData } = this.state;
-    if (matrixData[0] !== nextProps.zoom) {
+
+    if (reCenter) {
+      this.setState({
+        matrixData: [1, 0, 0, 1, 0, 0],
+      });
+    } else if (matrixData[0] !== nextProps.zoom) {
       const newMatrixData = [...this.state.matrixData];
       newMatrixData[0] = nextProps.zoom || newMatrixData[0];
       newMatrixData[3] = nextProps.zoom || newMatrixData[3];
+
       this.setState({
         matrixData: newMatrixData,
       });
@@ -102,7 +118,7 @@ export default class ReactPanZoom extends React.PureComponent<IReactPanZoomProps
       dragging: false,
     });
     if (this.panWrapper) {
-      this.panWrapper.style.cursor = "";
+      this.panWrapper.style.cursor = '';
     }
     if (this.props.onPan) {
       this.props.onPan(this.state.matrixData[4], this.state.matrixData[5]);
@@ -133,19 +149,19 @@ export default class ReactPanZoom extends React.PureComponent<IReactPanZoomProps
   public render() {
     return (
       <div
-        className={`pan-container ${this.props.className || ""}`}
+        className={`pan-container ${this.props.className || ''}`}
         onMouseDown={this.onMouseDown}
         onMouseUp={this.onMouseUp}
         onMouseMove={this.onMouseMove}
         style={{
           height: this.props.height,
-          userSelect: "none",
+          userSelect: 'none',
           width: this.props.width,
         }}
-        ref={(ref) => this.panWrapper = ref}
+        ref={ref => (this.panWrapper = ref)}
       >
         <div
-          ref={(ref) => ref ? this.panContainer = ref : null}
+          ref={ref => (ref ? (this.panContainer = ref) : null)}
           style={{
             transform: `matrix(${this.state.matrixData.toString()})`,
           }}
